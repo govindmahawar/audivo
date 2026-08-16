@@ -25,29 +25,54 @@ let playHistory = []
 let userBehavior = { genrePlayCount: {}, artistPlayCount: {} }
 
 // ============================================
-// SPOTIFY-STYLE LOGIN NAVIGATION
+// SPOTIFY-STYLE AUTH NAVIGATION (FIXED DOUBLE CLICK)
 // ============================================
-window.openForm = function(type) {
+
+// Show Landing or Auth Screen
+window.showAuthScreen = function(type) {
+  // Hide landing, show auth
   document.getElementById('landing-page').classList.add('hidden')
-  if (type === 'signup') {
-    document.getElementById('signup-page').classList.remove('hidden')
+  document.getElementById('auth-screen').classList.remove('hidden')
+
+  // Reset all forms first
+  document.getElementById('auth-signup').classList.remove('hidden')
+  document.getElementById('auth-login').classList.add('hidden')
+  document.getElementById('auth-title').textContent = 'Sign up'
+
+  // Now specific logic
+  if (type === 'login') {
+    document.getElementById('auth-signup').classList.add('hidden')
+    document.getElementById('auth-login').classList.remove('hidden')
+    document.getElementById('auth-title').textContent = 'Log in'
   } else {
-    document.getElementById('login-page').classList.remove('hidden')
+    // default signup is already shown
   }
 }
 
 window.goToLanding = function() {
-  document.getElementById('signup-page').classList.add('hidden')
-  document.getElementById('login-page').classList.add('hidden')
+  document.getElementById('auth-screen').classList.add('hidden')
   document.getElementById('landing-page').classList.remove('hidden')
 }
 
+// Toggle between Signup and Login
+window.toggleAuthForm = function(type) {
+  if (type === 'login') {
+    document.getElementById('auth-signup').classList.add('hidden')
+    document.getElementById('auth-login').classList.remove('hidden')
+    document.getElementById('auth-title').textContent = 'Log in'
+  } else {
+    document.getElementById('auth-signup').classList.remove('hidden')
+    document.getElementById('auth-login').classList.add('hidden')
+    document.getElementById('auth-title').textContent = 'Sign up'
+  }
+}
+
 // ============================================
-// AUTH FUNCTIONS (Email Only - Simplicity)
+// AUTH FUNCTIONS (Email Only)
 // ============================================
 
 // --- Sign Up ---
-window.handleSignup = async function() {
+window.handleEmailSignup = async function() {
   const email = document.getElementById('signup-email').value.trim()
   const password = document.getElementById('signup-password').value.trim()
   const errorEl = document.getElementById('signup-error')
@@ -69,7 +94,7 @@ window.handleSignup = async function() {
 }
 
 // --- Log In ---
-window.handleLogin = async function() {
+window.handleEmailLogin = async function() {
   const email = document.getElementById('login-email').value.trim()
   const password = document.getElementById('login-password').value.trim()
   const errorEl = document.getElementById('login-error')

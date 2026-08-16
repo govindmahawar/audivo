@@ -21,55 +21,58 @@
     <p class="login-tagline">Music for everyone</p>
     
     <div class="landing-buttons">
-      <button class="btn-spotify-green ripple" onclick="openForm('signup')">Sign up for free</button>
-      <button class="btn-spotify-outline ripple" onclick="openForm('login')">Log in</button>
+      <button class="btn-spotify-green ripple" onclick="showAuthScreen('signup')">Sign up for free</button>
+      <button class="btn-spotify-outline ripple" onclick="showAuthScreen('login')">Log in</button>
     </div>
   </div>
 
-  <!-- ===== SIGN UP FORM ===== -->
-  <div id="signup-page" class="login-box hidden">
+  <!-- ===== AUTH SCREEN (Signup + Login Combined) ===== -->
+  <div id="auth-screen" class="login-box hidden">
+    
+    <!-- Header with Back Button -->
     <div class="form-header">
       <button class="back-btn ripple" onclick="goToLanding()"><i class="fa fa-arrow-left"></i></button>
-      <h2>Sign up</h2>
+      <h2 id="auth-title">Sign up</h2>
     </div>
-    
-    <input type="email" id="signup-email" placeholder="Email address"/>
-    <input type="password" id="signup-password" placeholder="Password (min 6 chars)"/>
-    <div id="signup-error" class="error-msg"></div>
-    <button class="btn-spotify-green ripple" onclick="handleSignup()">Sign up</button>
-    
-    <div class="auth-divider">or sign up with</div>
-    <button class="social-btn disabled-btn" onclick="alert('Google login coming soon!')">
-      <i class="fa fa-google"></i> Google <span class="coming-soon">(Coming soon)</span>
-    </button>
-    <button class="social-btn disabled-btn" onclick="alert('Phone login coming soon!')">
-      <i class="fa fa-phone"></i> Phone number <span class="coming-soon">(Coming soon)</span>
-    </button>
-    
-    <p class="bottom-link">Already have an account? <button class="link-btn" onclick="openForm('login')">Log in</button></p>
-  </div>
 
-  <!-- ===== LOG IN FORM ===== -->
-  <div id="login-page" class="login-box hidden">
-    <div class="form-header">
-      <button class="back-btn ripple" onclick="goToLanding()"><i class="fa fa-arrow-left"></i></button>
-      <h2>Log in</h2>
+    <!-- Signup Form -->
+    <div id="auth-signup">
+      <input type="email" id="signup-email" placeholder="Email address"/>
+      <input type="password" id="signup-password" placeholder="Password (min 6 chars)"/>
+      <div id="signup-error" class="error-msg"></div>
+      <button class="btn-spotify-green ripple" onclick="handleEmailSignup()">Sign up</button>
+      
+      <div class="auth-divider">or sign up with</div>
+      
+      <button class="social-btn disabled-btn" onclick="alert('Google login coming soon!')">
+        <i class="fa fa-google"></i> Google <span class="coming-soon">(Coming soon)</span>
+      </button>
+      <button class="social-btn disabled-btn" onclick="alert('Phone login coming soon!')">
+        <i class="fa fa-phone"></i> Phone number <span class="coming-soon">(Coming soon)</span>
+      </button>
+      
+      <p class="bottom-link" id="toggle-link-signup">Already have an account? <button class="link-btn" onclick="toggleAuthForm('login')">Log in</button></p>
     </div>
-    
-    <input type="email" id="login-email" placeholder="Email address"/>
-    <input type="password" id="login-password" placeholder="Password"/>
-    <div id="login-error" class="error-msg"></div>
-    <button class="btn-spotify-green ripple" onclick="handleLogin()">Log in</button>
-    
-    <div class="auth-divider">or log in with</div>
-    <button class="social-btn disabled-btn" onclick="alert('Google login coming soon!')">
-      <i class="fa fa-google"></i> Google <span class="coming-soon">(Coming soon)</span>
-    </button>
-    <button class="social-btn disabled-btn" onclick="alert('Phone login coming soon!')">
-      <i class="fa fa-phone"></i> Phone number <span class="coming-soon">(Coming soon)</span>
-    </button>
-    
-    <p class="bottom-link">Don't have an account? <button class="link-btn" onclick="openForm('signup')">Sign up for free</button></p>
+
+    <!-- Login Form -->
+    <div id="auth-login" class="hidden">
+      <input type="email" id="login-email" placeholder="Email address"/>
+      <input type="password" id="login-password" placeholder="Password"/>
+      <div id="login-error" class="error-msg"></div>
+      <button class="btn-spotify-green ripple" onclick="handleEmailLogin()">Log in</button>
+      
+      <div class="auth-divider">or log in with</div>
+      
+      <button class="social-btn disabled-btn" onclick="alert('Google login coming soon!')">
+        <i class="fa fa-google"></i> Google <span class="coming-soon">(Coming soon)</span>
+      </button>
+      <button class="social-btn disabled-btn" onclick="alert('Phone login coming soon!')">
+        <i class="fa fa-phone"></i> Phone number <span class="coming-soon">(Coming soon)</span>
+      </button>
+      
+      <p class="bottom-link" id="toggle-link-login">Don't have an account? <button class="link-btn" onclick="toggleAuthForm('signup')">Sign up for free</button></p>
+    </div>
+
   </div>
 
 </div>
