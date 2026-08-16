@@ -25,56 +25,58 @@ let playHistory = []
 let userBehavior = { genrePlayCount: {}, artistPlayCount: {} }
 
 // ============================================
-// AUTH FUNCTIONS (Email, Phone Placeholder, Google)
+// SPOTIFY-STYLE LOGIN NAVIGATION
 // ============================================
-
-// --- Switch Main Tabs ---
-window.switchAuthTab = function(tab) {
-  document.getElementById('login-form').classList.add('hidden')
-  document.getElementById('phone-form').classList.add('hidden')
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'))
-
-  if (tab === 'login') {
-    document.getElementById('login-form').classList.remove('hidden')
-    document.getElementById('tab-login-btn').classList.add('active')
-  } else if (tab === 'phone') {
-    document.getElementById('phone-form').classList.remove('hidden')
-    document.getElementById('tab-phone-btn').classList.add('active')
-  } else if (tab === 'google') {
-    document.getElementById('tab-google-btn').classList.add('active')
-    document.getElementById('google-btn').classList.remove('hidden')
-    // Fallback for Google button visibility
-    setTimeout(() => document.getElementById('google-btn').classList.add('hidden'), 100)
+window.openForm = function(type) {
+  document.getElementById('landing-page').classList.add('hidden')
+  if (type === 'signup') {
+    document.getElementById('signup-page').classList.remove('hidden')
+  } else {
+    document.getElementById('login-page').classList.remove('hidden')
   }
 }
 
-// --- Switch Inner Tabs for Email ---
-window.switchEmailAuth = function(tab) {
-  document.getElementById('in-login').classList.add('hidden')
-  document.getElementById('in-signup').classList.add('hidden')
-  document.querySelectorAll('#login-form .auth-inner-tab').forEach(t => t.classList.remove('active'))
-  document.getElementById(tab).classList.remove('hidden')
-  const btn = tab === 'in-login' ? document.querySelector('#login-form .auth-inner-tab:first-child') : document.querySelector('#login-form .auth-inner-tab:last-child')
-  if(btn) btn.classList.add('active')
+window.goToLanding = function() {
+  document.getElementById('signup-page').classList.add('hidden')
+  document.getElementById('login-page').classList.add('hidden')
+  document.getElementById('landing-page').classList.remove('hidden')
 }
 
-// --- Switch Inner Tabs for Phone ---
-window.switchPhoneAuth = function(tab) {
-  document.getElementById('in-phone-login').classList.add('hidden')
-  document.getElementById('in-phone-signup').classList.add('hidden')
-  document.querySelectorAll('#phone-form .auth-inner-tab').forEach(t => t.classList.remove('active'))
-  document.getElementById(tab).classList.remove('hidden')
-  const btn = tab === 'in-phone-login' ? document.querySelector('#phone-form .auth-inner-tab:first-child') : document.querySelector('#phone-form .auth-inner-tab:last-child')
-  if(btn) btn.classList.add('active')
+// ============================================
+// AUTH FUNCTIONS (Email Only - Simplicity)
+// ============================================
+
+// --- Sign Up ---
+window.handleSignup = async function() {
+  const email = document.getElementById('signup-email').value.trim()
+  const password = document.getElementById('signup-password').value.trim()
+  const errorEl = document.getElementById('signup-error')
+  errorEl.textContent = ''
+  
+  if (!email || !password) { errorEl.textContent = 'Please fill all fields'; return }
+  if (password.length < 6) { errorEl.textContent = 'Password must be at least 6 characters'; return }
+  
+  try {
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) throw error
+    alert('✅ Account created! Please check your email to verify.')
+    // Go back to landing, user can now Login
+    goToLanding()
+    document.getElementById('login-email').value = email
+  } catch (error) {
+    errorEl.textContent = error.message
+  }
 }
 
-// --- Email Login ---
-window.handleEmailLogin = async function() {
+// --- Log In ---
+window.handleLogin = async function() {
   const email = document.getElementById('login-email').value.trim()
   const password = document.getElementById('login-password').value.trim()
   const errorEl = document.getElementById('login-error')
   errorEl.textContent = ''
+  
   if (!email || !password) { errorEl.textContent = 'Please fill all fields'; return }
+  
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
@@ -83,46 +85,6 @@ window.handleEmailLogin = async function() {
   } catch (error) {
     errorEl.textContent = error.message
   }
-}
-
-// --- Email Signup ---
-window.handleEmailSignup = async function() {
-  const email = document.getElementById('signup-email').value.trim()
-  const password = document.getElementById('signup-password').value.trim()
-  const errorEl = document.getElementById('signup-error')
-  errorEl.textContent = ''
-  if (!email || !password) { errorEl.textContent = 'Please fill all fields'; return }
-  if (password.length < 6) { errorEl.textContent = 'Password must be at least 6 characters'; return }
-  try {
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) throw error
-    alert('✅ Account created! Please check your email to verify.')
-    switchEmailAuth('in-login')
-    document.getElementById('login-email').value = email
-  } catch (error) {
-    errorEl.textContent = error.message
-  }
-}
-
-// --- Google Login ---
-window.handleGoogleLogin = async function() {
-  try {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    })
-    if (error) throw error
-  } catch (error) {
-    alert('Google login error: ' + error.message)
-  }
-}
-
-// --- Phone Login (Stubbed for now to prevent errors) ---
-window.handlePhoneLogin = async function() {
-  alert('Phone login is currently disabled. Please use Email or Google.');
-}
-window.handlePhoneSignup = async function() {
-  alert('Phone signup is currently disabled. Please use Email or Google.');
 }
 
 // --- Logout ---
