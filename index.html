@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Audivo</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="login-screen" class="screen">
+  <div class="login-box">
+    <div class="app-logo">
+      <span class="logo-icon"><i class="fa fa-headphones"></i></span>
+      <span class="logo-text">Audivo</span>
+    </div>
+    <p class="login-tagline">Music for everyone</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" id="tab-signup-btn" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+    <div id="login-form" class="auth-form">
+      <input type="email" id="login-email" placeholder="Email address"/>
+      <input type="password" id="login-password" placeholder="Password"/>
+      <div id="login-error" class="error-msg"></div>
+      <button class="login-btn ripple" onclick="handleLogin()">LOG IN</button>
+      <button class="social-btn google-btn ripple" onclick="handleGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.96 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+    <div id="signup-form" class="auth-form hidden">
+      <input type="email" id="signup-email" placeholder="Email address"/>
+      <input type="password" id="signup-password" placeholder="Password (min 6 chars)"/>
+      <div id="signup-error" class="error-msg"></div>
+      <button class="login-btn ripple" onclick="handleSignup()">SIGN UP</button>
+    </div>
+    <div class="login-hint">
+      <p>👑 Admin: <b>admin@audivo.com</b> / <b>admin123</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MAIN APP ==================== -->
+<div id="app" class="hidden">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="avatar ripple" onclick="toggleProfileMenu()">
+        <span id="avatar-letter">U</span>
+      </div>
+      <div class="profile-menu hidden" id="profile-menu">
+        <div class="profile-menu-header">
+          <div class="pm-avatar"><span id="pm-avatar-letter">U</span></div>
+          <div>
+            <div class="profile-name" id="profile-name-label">User</div>
+            <div class="profile-role" id="profile-role-label">Listener</div>
+          </div>
+        </div>
+        <hr class="menu-divider"/>
+        <div class="menu-item ripple" onclick="showProfilePage('your-update')"><i class="fa fa-user-circle"></i> Your Update</div>
+        <div class="menu-item ripple" onclick="showProfilePage('recent-page')"><i class="fa fa-history"></i> Recent</div>
+        <div class="menu-item admin-only hidden ripple" onclick="showProfilePage('admin-panel')"><i class="fa fa-users-cog"></i> Admin Panel</div>
+        <div class="menu-item ripple" onclick="showProfilePage('settings-page')"><i class="fa fa-cog"></i> Settings &amp; Privacy</div>
+        <div class="menu-item admin-only hidden ripple" id="upload-menu-item" onclick="switchTab('upload')"><i class="fa fa-upload"></i> Upload Song</div>
+        <hr class="menu-divider"/>
+        <div class="menu-item menu-item-danger ripple" onclick="handleLogout()"><i class="fa fa-sign-out-alt"></i> Logout</div>
+      </div>
+    </div>
+    <div class="top-filters">
+      <button class="filter-pill active ripple" id="pill-all" onclick="setFilter('all')">All</button>
+      <button class="filter-pill ripple" id="pill-music" onclick="setFilter('music')">Music</button>
+      <button class="filter-pill ripple" id="pill-podcasts" onclick="setFilter('podcasts')">Podcasts</button>
+    </div>
+    <div class="top-right">
+      <button class="icon-top-btn ripple"><i class="fa fa-bell"></i></button>
+    </div>
+  </div>
+
+  <!-- PAGES CONTAINER -->
+  <div class="pages-container">
+
+    <!-- HOME PAGE -->
+    <div id="page-home" class="page active">
+      <div id="home-empty-state" class="empty-state">
+        <i class="fa fa-music"></i>
+        <h3>No songs yet</h3>
+        <p>Admin needs to upload songs first</p>
+      </div>
+      <div id="home-content" class="hidden">
+        <div class="quick-access-row" id="quick-access-row"></div>
+        
+        <section class="section">
+          <div class="section-header"><h2>🆕 Recently Uploaded</h2></div>
+          <div class="horizontal-scroll" id="recent-upload-list"></div>
+        </section>
+        <section class="section" id="section-new-release">
+          <div class="section-header"><h2>🔥 New Releases</h2></div>
+          <div class="horizontal-scroll" id="new-release-list"></div>
+        </section>
+        <section class="section" id="section-popular-artists">
+          <div class="section-header"><h2>🎤 Popular Artists</h2></div>
+          <div class="horizontal-scroll" id="popular-artists-list"></div>
+        </section>
+        
+        <section class="section" id="section-popular-songs">
+          <div class="section-header"><h2>🔥 Popular Songs</h2></div>
+          <div class="horizontal-scroll" id="popular-songs-list"></div>
+        </section>
+        <section class="section" id="section-made-for-you">
+          <div class="section-header"><h2 id="made-for-label">Made For You</h2></div>
+          <div class="horizontal-scroll" id="made-for-list"></div>
+        </section>
+        
+        <section class="section">
+          <div class="section-header"><h2>All Songs</h2></div>
+          <div class="horizontal-scroll" id="all-songs-list"></div>
+        </section>
+        
+        <div id="songs-container" style="padding: 10px 16px;"></div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+
+    <!-- SEARCH PAGE -->
+    <div id="page-search" class="page">
+      <h1 class="page-title">Search</h1>
+      <div class="search-wrap">
+        <i class="fa fa-search search-icon-left"></i>
+        <input type="text" id="search-input" placeholder="Songs, artists, genres..." oninput="searchSongs()" autocomplete="off" class="search-bar"/>
+        <button class="search-clear ripple" id="search-clear-btn" onclick="clearSearch()"><i class="fa fa-times"></i></button>
+      </div>
+      <div id="search-empty">
+        <h3 class="browse-title">Browse Categories</h3>
+        <div class="genre-grid" id="genre-grid"></div>
+      </div>
+      <div id="search-results-wrap" class="hidden">
+        <p class="results-count" id="results-count"></p>
+        <div class="song-list" id="search-results"></div>
+      </div>
+    </div>
+
+    <!-- LIBRARY PAGE -->
+    <div id="page-library" class="page">
+      <div class="lib-header">
+        <h1 class="page-title">Your Library</h1>
+        <button class="add-btn ripple" onclick="createPlaylist()"><i class="fa fa-plus"></i></button>
+      </div>
+      <div class="lib-filter-row">
+        <button class="lib-pill active ripple" onclick="showLibTab('playlists',this)">Playlists</button>
+        <button class="lib-pill ripple" onclick="showLibTab('liked',this)">Liked Songs</button>
+        <button class="lib-pill ripple" onclick="showLibTab('artists',this)">Artists</button>
+        <button class="lib-pill ripple" onclick="showLibTab('history',this)">Recently played</button>
+      </div>
+      <div id="lib-playlists" class="lib-tab active">
+        <div id="playlist-list"></div>
+        <button class="create-playlist-btn ripple" onclick="createPlaylist()"><i class="fa fa-plus"></i> Create playlist</button>
+      </div>
+      <div id="lib-liked" class="lib-tab hidden">
+        <div class="song-list" id="liked-list"></div>
+      </div>
+      <div id="lib-artists" class="lib-tab hidden">
+        <div id="followed-artists-list"></div>
+        <p style="color:var(--text-muted);font-size:12px;margin-top:12px">Artists appear here when admin uploads songs or you follow them.</p>
+      </div>
+      <div id="lib-history" class="lib-tab hidden">
+        <div class="song-list" id="history-list"></div>
+      </div>
+    </div>
+
+    <!-- PREMIUM PAGE -->
+    <div id="page-premium" class="page">
+      <div class="premium-hero">
+        <div class="premium-logo"><i class="fa fa-headphones"></i> Audivo</div>
+        <h1>Audivo Premium</h1>
+        <p>Listen without limits. No ads. Download music. Better audio.</p>
+      </div>
+      <div class="plan-cards">
+        <div class="plan-card featured">
+          <div class="plan-badge">Most Popular</div>
+          <h3>Individual</h3>
+          <div class="plan-price">₹119<span>/month</span></div>
+          <ul>
+            <li><i class="fa fa-check"></i> Ad-free music</li>
+            <li><i class="fa fa-check"></i> Offline downloads</li>
+            <li><i class="fa fa-check"></i> High quality audio</li>
+            <li><i class="fa fa-check"></i> Unlimited skips</li>
+          </ul>
+          <button class="btn-premium ripple">Get Premium</button>
+        </div>
+        <div class="plan-card">
+          <h3>Duo</h3>
+          <div class="plan-price">₹149<span>/month</span></div>
+          <ul>
+            <li><i class="fa fa-check"></i> 2 accounts</li>
+            <li><i class="fa fa-check"></i> All Individual features</li>
+          </ul>
+          <button class="btn-premium-outline ripple">Get Duo</button>
+        </div>
+        <div class="plan-card">
+          <h3>Family</h3>
+          <div class="plan-price">₹179<span>/month</span></div>
+          <ul>
+            <li><i class="fa fa-check"></i> Up to 6 accounts</li>
+            <li><i class="fa fa-check"></i> All features included</li>
+          </ul>
+          <button class="btn-premium-outline ripple">Get Family</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE PAGE -->
+    <div id="page-create" class="page">
+      <h1 class="page-title">Create</h1>
+      <div class="create-options">
+        <div class="create-card ripple" onclick="createPlaylist()">
+          <div class="create-icon" style="background:#8b5cf6"><i class="fa fa-list"></i></div>
+          <div>
+            <div class="create-label">New Playlist</div>
+            <div class="create-sub">Collect your favourite songs</div>
+          </div>
+        </div>
+        <div class="create-card admin-only hidden ripple" id="upload-create-btn" onclick="switchTab('upload')">
+          <div class="create-icon" style="background:#1db954"><i class="fa fa-upload"></i></div>
+          <div>
+            <div class="create-label">Upload Song</div>
+            <div class="create-sub">Admin only — add new tracks</div>
+          </div>
+        </div>
+        <div class="create-card admin-only hidden ripple" onclick="showPage('add-artist')">
+          <div class="create-icon" style="background:#e74c3c"><i class="fa fa-user-plus"></i></div>
+          <div>
+            <div class="create-label">Add Artist</div>
+            <div class="create-sub">Admin only — add popular artists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD PAGE -->
+    <div id="page-upload" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Upload Song <span class="badge-admin">Admin</span></h1>
+      </div>
+      <div class="upload-box">
+        <div class="cover-picker" id="cover-picker" onclick="document.getElementById('cover-input').click()">
+          <div class="cover-placeholder" id="cover-placeholder">
+            <i class="fa fa-image"></i>
+            <p>Tap to add cover photo</p>
+          </div>
+          <img id="cover-preview-img" src="" alt="cover" class="cover-preview-img hidden"/>
+          <input type="file" id="cover-input" accept="image/*" onchange="handleCoverSelect(event)" style="display:none"/>
+        </div>
+        <div class="upload-drop" id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <i class="fa fa-cloud-upload-alt"></i>
+          <p id="drop-zone-text">Tap to select audio file</p>
+          <p class="upload-hint">Supports MP3, WAV, FLAC</p>
+          <input type="file" id="file-input" accept="audio/*" onchange="handleFileSelect(event)" style="display:none"/>
+        </div>
+        <div id="upload-form">
+          <input type="text" id="song-title" placeholder="Song Title *"/>
+          <input type="text" id="song-artist" placeholder="Artist Name *"/>
+          <select id="song-genre">
+            <option value="">Select Genre *</option>
+            <option>Pop</option><option>Rock</option><option>Hip-Hop</option>
+            <option>Jazz</option><option>Classical</option><option>Electronic</option>
+            <option>R&B</option><option>Bollywood</option><option>Indie</option>
+          </select>
+          <label class="new-release-check">
+            <input type="checkbox" id="is-new-release"/> Mark as New Release 🔥
+          </label>
+          <div id="audio-preview-wrap" class="hidden">
+            <audio id="audio-preview" controls style="width:100%;border-radius:8px"></audio>
+          </div>
+          <button class="btn-primary ripple" onclick="handleUpload()"><i class="fa fa-upload"></i> Upload Song</button>
+        </div>
+        
+        <!-- Delete Song Feature -->
+        <div style="margin-top:20px; border-top:1px solid #333; padding-top:20px;">
+          <h3 style="color:var(--text-muted); font-size:16px; margin-bottom:10px;">🗑️ Delete Song</h3>
+          <div style="display:flex; gap:10px;">
+            <input type="text" id="delete-song-search" placeholder="Search song to delete..." style="flex:1; background:var(--surface2); border:1px solid #444; border-radius:8px; padding:12px; color:#fff; outline:none;" oninput="searchSongsToDelete()"/>
+          </div>
+          <div id="delete-song-list" style="margin-top:10px; max-height:200px; overflow-y:auto;"></div>
+        </div>
+        
+        <div id="upload-success" class="hidden success-msg">
+          <i class="fa fa-check-circle"></i>
+          <p>Song uploaded successfully!</p>
+          <p style="font-size:12px;color:var(--text-muted)">Now visible to all users</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD ARTIST PAGE -->
+    <div id="page-add-artist" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Add Artist <span class="badge-admin">Admin</span></h1>
+      </div>
+      <div class="upload-box">
+        <div class="cover-picker" id="artist-cover-picker" onclick="document.getElementById('artist-photo-input').click()">
+          <div class="cover-placeholder" id="artist-cover-placeholder">
+            <i class="fa fa-user"></i>
+            <p>Tap to add artist photo</p>
+          </div>
+          <img id="artist-photo-preview" src="" alt="artist" class="cover-preview-img hidden" style="border-radius:50%"/>
+          <input type="file" id="artist-photo-input" accept="image/*" onchange="handleArtistPhotoSelect(event)" style="display:none"/>
+        </div>
+        <div id="add-artist-form">
+          <input type="text" id="artist-name-input" placeholder="Artist Name *"/>
+          <input type="text" id="artist-genre-input" placeholder="Genre (e.g. Pop, Rock)"/>
+          <textarea id="artist-bio-input" placeholder="Artist Bio (optional)" rows="3" style="background:var(--surface2);border:1px solid #444;border-radius:8px;padding:13px;color:var(--text);font-size:14px;resize:none;outline:none;font-family:inherit"></textarea>
+          <button class="btn-primary ripple" onclick="addArtist()"><i class="fa fa-user-plus"></i> Add Artist</button>
+        </div>
+        <div id="add-artist-success" class="hidden success-msg">
+          <i class="fa fa-check-circle"></i>
+          <p>Artist added successfully!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL PAGE -->
+    <div id="page-admin-panel" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Admin Panel <span class="badge-admin">Admin</span></h1>
+      </div>
+      <div style="padding:0 16px;">
+        <h3 style="color: var(--text-muted); font-size:14px; margin-bottom:10px;">All Registered Users</h3>
+        <div id="all-users-list"></div>
+      </div>
+    </div>
+
+    <!-- YOUR UPDATE PAGE -->
+    <div id="page-your-update" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Your Update</h1>
+      </div>
+      <div class="your-update-content">
+        <div class="profile-big-card">
+          <div class="profile-big-avatar" id="update-avatar">U</div>
+          <div class="profile-big-name" id="update-name">User</div>
+          <div class="profile-big-role" id="update-role">Listener</div>
+          <button class="edit-profile-btn ripple" onclick="editProfile()"><i class="fa fa-edit"></i> Edit Profile</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-num" id="stat-songs">0</div><div class="stat-label">Songs Played</div></div>
+          <div class="stat-card"><div class="stat-num" id="stat-liked">0</div><div class="stat-label">Liked</div></div>
+          <div class="stat-card"><div class="stat-num" id="stat-playlists">0</div><div class="stat-label">Playlists</div></div>
+        </div>
+        <div class="update-section"><h3>Top Genre</h3><div class="top-genre-badge" id="top-genre-badge">-</div></div>
+        <div class="update-section"><h3>Top Artist</h3><div class="top-artist-badge" id="top-artist-badge">-</div></div>
+        <div class="update-section" id="admin-uploaded-section" style="display:none">
+          <h3>Songs You Uploaded</h3>
+          <div class="song-list" id="admin-uploaded-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT PAGE -->
+    <div id="page-recent-page" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Recent</h1>
+      </div>
+      <div class="song-list" id="recent-song-list" style="padding:0 16px"></div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings-page" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Settings &amp; Privacy</h1>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Account</div>
+        <div class="settings-item ripple" onclick="openSettingsModal('account')">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#3498db"><i class="fa fa-user"></i></div>
+            <div><div class="settings-label">Account</div><div class="settings-sub">Manage your Audivo account</div></div>
+          </div>
+          <i class="fa fa-chevron-right settings-arrow"></i>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Playback</div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#8b5cf6"><i class="fa fa-play-circle"></i></div>
+            <div><div class="settings-label">Autoplay</div><div class="settings-sub">Play similar songs automatically</div></div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="toggle-autoplay" checked onchange="saveSetting('autoplay',this.checked)"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#e67e22"><i class="fa fa-headphones"></i></div>
+            <div><div class="settings-label">Mono Audio</div><div class="settings-sub">Combine stereo into one</div></div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="toggle-mono" onchange="saveSetting('mono',this.checked)"/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Notifications</div>
+        <div class="settings-item">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#e74c3c"><i class="fa fa-bell"></i></div>
+            <div><div class="settings-label">Notifications</div><div class="settings-sub">New releases and recommendations</div></div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="toggle-notif" checked onchange="saveSetting('notifications',this.checked)"/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">Media Quality</div>
+        <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:12px">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#1db954"><i class="fa fa-music"></i></div>
+            <div><div class="settings-label">Streaming Quality</div><div class="settings-sub" id="quality-sub">Normal</div></div>
+          </div>
+          <div class="quality-options">
+            <button class="quality-btn ripple" id="q-low" onclick="setQuality('Low')">Low</button>
+            <button class="quality-btn active ripple" id="q-normal" onclick="setQuality('Normal')">Normal</button>
+            <button class="quality-btn ripple" id="q-high" onclick="setQuality('High')">High</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-group-title">About &amp; Support</div>
+        <div class="settings-item ripple" onclick="openSettingsModal('version')">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#2c3e50"><i class="fa fa-info-circle"></i></div>
+            <div><div class="settings-label">Version</div><div class="settings-sub">Audivo v1.0.0</div></div>
+          </div>
+          <i class="fa fa-chevron-right settings-arrow"></i>
+        </div>
+        <div class="settings-item ripple" onclick="openSettingsModal('support')">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#16a085"><i class="fa fa-headset"></i></div>
+            <div><div class="settings-label">Support</div><div class="settings-sub">Get help and contact us</div></div>
+          </div>
+          <i class="fa fa-chevron-right settings-arrow"></i>
+        </div>
+        <div class="settings-item ripple" onclick="openSettingsModal('terms')">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#8e44ad"><i class="fa fa-file-alt"></i></div>
+            <div><div class="settings-label">Terms of Use</div><div class="settings-sub">Read our terms</div></div>
+          </div>
+          <i class="fa fa-chevron-right settings-arrow"></i>
+        </div>
+        <div class="settings-item ripple" onclick="openSettingsModal('privacy')">
+          <div class="settings-item-left">
+            <div class="settings-icon" style="background:#c0392b"><i class="fa fa-shield-alt"></i></div>
+            <div><div class="settings-label">Privacy Policy</div><div class="settings-sub">How we handle your data</div></div>
+          </div>
+          <i class="fa fa-chevron-right settings-arrow"></i>
+        </div>
+      </div>
+      <div style="height:30px"></div>
+    </div>
+
+  </div>
+
+  <!-- MINI PLAYER -->
+  <div id="mini-player" class="mini-player hidden" onclick="openFullPlayer()">
+    <div class="mini-thumb" id="mini-thumb-el"><i class="fa fa-music"></i></div>
+    <div class="mini-info">
+      <span id="mini-title">-</span>
+      <span id="mini-artist">-</span>
+    </div>
+    <div class="mini-controls">
+      <button class="icon-btn ripple" onclick="event.stopPropagation();toggleLike()"><i class="fa fa-heart" id="mini-heart"></i></button>
+      <button class="icon-btn play-mini-btn ripple" onclick="event.stopPropagation();togglePlay()"><i class="fa fa-play" id="mini-play-icon"></i></button>
+      <button class="icon-btn ripple" onclick="event.stopPropagation();nextSong()"><i class="fa fa-step-forward"></i></button>
+    </div>
+    <div class="mini-progress"><div class="mini-progress-bar" id="mini-progress-bar"></div></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-item active ripple" id="nav-home" onclick="switchTab('home')"><i class="fa fa-home"></i><span>Home</span></button>
+    <button class="nav-item ripple" id="nav-search" onclick="switchTab('search')"><i class="fa fa-search"></i><span>Search</span></button>
+    <button class="nav-item ripple" id="nav-library" onclick="switchTab('library')"><i class="fa fa-layer-group"></i><span>Your Library</span></button>
+    <button class="nav-item ripple" id="nav-premium" onclick="switchTab('premium')"><i class="fa fa-star"></i><span>Premium</span></button>
+    <button class="nav-item ripple" id="nav-create" onclick="switchTab('create')"><i class="fa fa-plus"></i><span>Create</span></button>
+  </div>
+
+  <!-- FULL PLAYER -->
+  <div id="full-player" class="full-player hidden">
+    <div class="fp-header">
+      <button class="fp-back ripple" onclick="closeFullPlayer()"><i class="fa fa-chevron-down"></i></button>
+      <div class="fp-header-info"><span>Now Playing</span></div>
+      <button class="icon-btn ripple"><i class="fa fa-ellipsis-v"></i></button>
+    </div>
+    <div class="fp-art"><div class="fp-thumb" id="fp-thumb"><i class="fa fa-music"></i></div></div>
+    <div class="fp-meta">
+      <div class="fp-title-row">
+        <div>
+          <div class="fp-title" id="fp-title">-</div>
+          <div class="fp-artist" id="fp-artist">-</div>
+        </div>
+        <button class="icon-btn fp-like ripple" onclick="toggleLike()"><i class="fa fa-heart" id="fp-heart"></i></button>
+      </div>
+    </div>
+    <div class="fp-seek">
+      <input type="range" id="seek-bar" value="0" min="0" max="100" oninput="seekTo(this.value)"/>
+      <div class="seek-times"><span id="time-current">0:00</span><span id="time-total">0:00</span></div>
+    </div>
+    <div class="fp-controls">
+      <button class="icon-btn ripple" id="shuffle-btn" onclick="toggleShuffle()"><i class="fa fa-random"></i></button>
+      <button class="icon-btn fp-prev ripple" onclick="prevSong()"><i class="fa fa-step-backward"></i></button>
+      <button class="fp-play-btn ripple" onclick="togglePlay()"><i class="fa fa-play" id="fp-play-icon"></i></button>
+      <button class="icon-btn fp-next ripple" onclick="nextSong()"><i class="fa fa-step-forward"></i></button>
+      <button class="icon-btn ripple" id="repeat-btn" onclick="toggleRepeat()"><i class="fa fa-redo"></i></button>
+    </div>
+    <div class="fp-volume">
+      <i class="fa fa-volume-down"></i>
+      <input type="range" id="volume-bar" value="80" min="0" max="100" oninput="setVolume(this.value)"/>
+      <i class="fa fa-volume-up"></i>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="modal-overlay hidden" onclick="closeSettingsModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-title">Info</h3>
+        <button class="modal-close ripple" onclick="closeSettingsModal()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script type="importmap">
+{
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+  }
+}
+</script>
+
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
