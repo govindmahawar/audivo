@@ -25,27 +25,20 @@ let playHistory = []
 let userBehavior = { genrePlayCount: {}, artistPlayCount: {} }
 
 // ============================================
-// SPOTIFY-STYLE AUTH NAVIGATION (FIXED DOUBLE CLICK)
+// SPOTIFY-STYLE AUTH NAVIGATION
 // ============================================
-
-// Show Landing or Auth Screen
 window.showAuthScreen = function(type) {
-  // Hide landing, show auth
   document.getElementById('landing-page').classList.add('hidden')
   document.getElementById('auth-screen').classList.remove('hidden')
 
-  // Reset all forms first
   document.getElementById('auth-signup').classList.remove('hidden')
   document.getElementById('auth-login').classList.add('hidden')
   document.getElementById('auth-title').textContent = 'Sign up'
 
-  // Now specific logic
   if (type === 'login') {
     document.getElementById('auth-signup').classList.add('hidden')
     document.getElementById('auth-login').classList.remove('hidden')
     document.getElementById('auth-title').textContent = 'Log in'
-  } else {
-    // default signup is already shown
   }
 }
 
@@ -54,7 +47,6 @@ window.goToLanding = function() {
   document.getElementById('landing-page').classList.remove('hidden')
 }
 
-// Toggle between Signup and Login
 window.toggleAuthForm = function(type) {
   if (type === 'login') {
     document.getElementById('auth-signup').classList.add('hidden')
@@ -68,10 +60,8 @@ window.toggleAuthForm = function(type) {
 }
 
 // ============================================
-// AUTH FUNCTIONS (Email Only)
+// AUTH FUNCTIONS
 // ============================================
-
-// --- Sign Up ---
 window.handleEmailSignup = async function() {
   const email = document.getElementById('signup-email').value.trim()
   const password = document.getElementById('signup-password').value.trim()
@@ -85,7 +75,6 @@ window.handleEmailSignup = async function() {
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) throw error
     alert('✅ Account created! Please check your email to verify.')
-    // Go back to landing, user can now Login
     goToLanding()
     document.getElementById('login-email').value = email
   } catch (error) {
@@ -93,7 +82,6 @@ window.handleEmailSignup = async function() {
   }
 }
 
-// --- Log In ---
 window.handleEmailLogin = async function() {
   const email = document.getElementById('login-email').value.trim()
   const password = document.getElementById('login-password').value.trim()
@@ -112,7 +100,6 @@ window.handleEmailLogin = async function() {
   }
 }
 
-// --- Logout ---
 window.handleLogout = async function() {
   try {
     await supabase.auth.signOut()
@@ -133,7 +120,6 @@ window.handleLogout = async function() {
   }
 }
 
-// --- On Auth Success ---
 function onAuthSuccess(user) {
   currentUser = user
   document.getElementById('login-screen').style.display = 'none'
