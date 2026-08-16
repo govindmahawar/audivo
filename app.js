@@ -25,48 +25,54 @@ let playHistory = []
 let userBehavior = { genrePlayCount: {}, artistPlayCount: {} }
 
 // ============================================
-// AUTH FUNCTIONS
+// AUTH FUNCTIONS (Email, Phone Placeholder, Google)
 // ============================================
+
+// --- Switch Main Tabs ---
 window.switchAuthTab = function(tab) {
-  const loginForm  = document.getElementById('login-form')
-  const signupForm = document.getElementById('signup-form')
-  const loginBtn   = document.getElementById('tab-login-btn')
-  const signupBtn  = document.getElementById('tab-signup-btn')
+  document.getElementById('login-form').classList.add('hidden')
+  document.getElementById('phone-form').classList.add('hidden')
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'))
+
   if (tab === 'login') {
-    loginForm.classList.remove('hidden')
-    signupForm.classList.add('hidden')
-    loginBtn.classList.add('active')
-    signupBtn.classList.remove('active')
-  } else {
-    loginForm.classList.add('hidden')
-    signupForm.classList.remove('hidden')
-    signupBtn.classList.add('active')
-    loginBtn.classList.remove('active')
+    document.getElementById('login-form').classList.remove('hidden')
+    document.getElementById('tab-login-btn').classList.add('active')
+  } else if (tab === 'phone') {
+    document.getElementById('phone-form').classList.remove('hidden')
+    document.getElementById('tab-phone-btn').classList.add('active')
+  } else if (tab === 'google') {
+    document.getElementById('tab-google-btn').classList.add('active')
+    document.getElementById('google-btn').classList.remove('hidden')
+    // Fallback for Google button visibility
+    setTimeout(() => document.getElementById('google-btn').classList.add('hidden'), 100)
   }
 }
 
-window.handleSignup = async function() {
-  const email    = document.getElementById('signup-email').value.trim()
-  const password = document.getElementById('signup-password').value.trim()
-  const errorEl  = document.getElementById('signup-error')
-  errorEl.textContent = ''
-  if (!email || !password) { errorEl.textContent = 'Please fill all fields'; return }
-  if (password.length < 6) { errorEl.textContent = 'Password must be at least 6 characters'; return }
-  try {
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) throw error
-    alert('✅ Account created! Please check your email to verify.')
-    switchAuthTab('login')
-    document.getElementById('login-email').value = email
-  } catch (error) {
-    errorEl.textContent = error.message
-  }
+// --- Switch Inner Tabs for Email ---
+window.switchEmailAuth = function(tab) {
+  document.getElementById('in-login').classList.add('hidden')
+  document.getElementById('in-signup').classList.add('hidden')
+  document.querySelectorAll('#login-form .auth-inner-tab').forEach(t => t.classList.remove('active'))
+  document.getElementById(tab).classList.remove('hidden')
+  const btn = tab === 'in-login' ? document.querySelector('#login-form .auth-inner-tab:first-child') : document.querySelector('#login-form .auth-inner-tab:last-child')
+  if(btn) btn.classList.add('active')
 }
 
-window.handleLogin = async function() {
-  const email    = document.getElementById('login-email').value.trim()
+// --- Switch Inner Tabs for Phone ---
+window.switchPhoneAuth = function(tab) {
+  document.getElementById('in-phone-login').classList.add('hidden')
+  document.getElementById('in-phone-signup').classList.add('hidden')
+  document.querySelectorAll('#phone-form .auth-inner-tab').forEach(t => t.classList.remove('active'))
+  document.getElementById(tab).classList.remove('hidden')
+  const btn = tab === 'in-phone-login' ? document.querySelector('#phone-form .auth-inner-tab:first-child') : document.querySelector('#phone-form .auth-inner-tab:last-child')
+  if(btn) btn.classList.add('active')
+}
+
+// --- Email Login ---
+window.handleEmailLogin = async function() {
+  const email = document.getElementById('login-email').value.trim()
   const password = document.getElementById('login-password').value.trim()
-  const errorEl  = document.getElementById('login-error')
+  const errorEl = document.getElementById('login-error')
   errorEl.textContent = ''
   if (!email || !password) { errorEl.textContent = 'Please fill all fields'; return }
   try {
@@ -79,6 +85,26 @@ window.handleLogin = async function() {
   }
 }
 
+// --- Email Signup ---
+window.handleEmailSignup = async function() {
+  const email = document.getElementById('signup-email').value.trim()
+  const password = document.getElementById('signup-password').value.trim()
+  const errorEl = document.getElementById('signup-error')
+  errorEl.textContent = ''
+  if (!email || !password) { errorEl.textContent = 'Please fill all fields'; return }
+  if (password.length < 6) { errorEl.textContent = 'Password must be at least 6 characters'; return }
+  try {
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) throw error
+    alert('✅ Account created! Please check your email to verify.')
+    switchEmailAuth('in-login')
+    document.getElementById('login-email').value = email
+  } catch (error) {
+    errorEl.textContent = error.message
+  }
+}
+
+// --- Google Login ---
 window.handleGoogleLogin = async function() {
   try {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -91,6 +117,15 @@ window.handleGoogleLogin = async function() {
   }
 }
 
+// --- Phone Login (Stubbed for now to prevent errors) ---
+window.handlePhoneLogin = async function() {
+  alert('Phone login is currently disabled. Please use Email or Google.');
+}
+window.handlePhoneSignup = async function() {
+  alert('Phone signup is currently disabled. Please use Email or Google.');
+}
+
+// --- Logout ---
 window.handleLogout = async function() {
   try {
     await supabase.auth.signOut()
@@ -111,6 +146,7 @@ window.handleLogout = async function() {
   }
 }
 
+// --- On Auth Success ---
 function onAuthSuccess(user) {
   currentUser = user
   document.getElementById('login-screen').style.display = 'none'
@@ -118,16 +154,17 @@ function onAuthSuccess(user) {
   app.classList.remove('hidden')
   app.style.display = 'flex'
 
-  const letter = user.email[0].toUpperCase()
+  const identifier = user.email || user.phone || 'User'
+  const letter = identifier[0].toUpperCase()
   document.getElementById('avatar-letter').textContent      = letter
   document.getElementById('pm-avatar-letter').textContent   = letter
-  document.getElementById('profile-name-label').textContent = user.email
+  document.getElementById('profile-name-label').textContent = identifier
   document.getElementById('profile-role-label').textContent = '🎵 Listener'
-  document.getElementById('made-for-label') && (document.getElementById('made-for-label').textContent = `Made For ${user.email.split('@')[0]}`)
+  document.getElementById('made-for-label') && (document.getElementById('made-for-label').textContent = `Made For ${identifier.split('@')[0] || identifier}`)
 
   document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'))
 
-  checkIfAdmin(user.id, user.email)
+  checkIfAdmin(user.id, user.email || user.phone)
   loadSongs()
   loadLikedSongs()
   loadPlaylists()
@@ -138,11 +175,11 @@ function onAuthSuccess(user) {
 // ============================================
 // ADMIN CHECK
 // ============================================
-async function checkIfAdmin(userId, email) {
+async function checkIfAdmin(userId, identifier) {
   try {
     const { data } = await supabase.from('profiles').select('role').eq('id', userId).single()
-    let isAdmin = (data && data.role === 'admin') || email === 'admin@audivo.com'
-    if (email === 'admin@audivo.com' && (!data || data.role !== 'admin')) {
+    let isAdmin = (data && data.role === 'admin') || identifier === 'admin@audivo.com'
+    if (identifier === 'admin@audivo.com' && (!data || data.role !== 'admin')) {
       await supabase.from('profiles').upsert({ id: userId, role: 'admin' })
     }
     if (isAdmin) {
@@ -190,11 +227,10 @@ window.toggleAdminRole = async function(userId, currentRole) {
 }
 
 // ============================================
-// SONGS (FIXED DATABASE FETCH)
+// SONGS
 // ============================================
 async function loadSongs() {
   try {
-    // REMOVED .order() to prevent column errors. Fetches all songs.
     const { data, error } = await supabase.from('song').select('*')
     if (error) throw error
     songs = data || []
@@ -549,7 +585,6 @@ window.playSong = function(index) {
   currentSongIndex = index
   const song = songs[index]
 
-  // Track behavior
   userBehavior.genrePlayCount[song.genre]   = (userBehavior.genrePlayCount[song.genre]   || 0) + 1
   userBehavior.artistPlayCount[song.artist] = (userBehavior.artistPlayCount[song.artist]  || 0) + 1
   playHistory.unshift(song)
@@ -581,7 +616,6 @@ window.playSong = function(index) {
       document.getElementById('fp-play-icon').className   = 'fa fa-pause'
       updateLikeUI()
       renderQuickAccess()
-      // Update plays count
       supabase.from('song').update({ plays: (song.plays || 0) + 1 }).eq('id', song.id).then(() => {
         song.plays = (song.plays || 0) + 1
       })
@@ -697,7 +731,7 @@ function renderLikedList() {
 }
 
 // ============================================
-// PLAYLIST FUNCTIONS (100% Working)
+// PLAYLIST FUNCTIONS
 // ============================================
 window.createPlaylist = async function() {
   const name = prompt('Enter Playlist Name:')
@@ -742,14 +776,12 @@ async function loadPlaylists() {
   }
 }
 
-// openPlaylistView — Shows songs, play works, remove works
 window.openPlaylistView = async function(playlistId, playlistName) {
   currentViewingPlaylistId   = playlistId
   currentViewingPlaylistName = playlistName
 
   document.getElementById('playlist-view-title').textContent = playlistName
 
-  // Switch to playlist-view page
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
   document.getElementById('page-playlist-view').classList.add('active')
@@ -762,7 +794,6 @@ window.openPlaylistView = async function(playlistId, playlistName) {
     </div>`
 
   try {
-    // Get song IDs in this playlist
     const { data: plSongs, error } = await supabase
       .from('playlist_songs')
       .select('song_id')
@@ -814,7 +845,6 @@ window.openPlaylistView = async function(playlistId, playlistName) {
   }
 }
 
-// addCurrentSongToPlaylist — shows modal, cancel works, X works
 window.addCurrentSongToPlaylist = async function(songIdParam = null) {
   if (!currentUser) return alert('Please login')
 
@@ -843,7 +873,6 @@ window.addCurrentSongToPlaylist = async function(songIdParam = null) {
       return
     }
 
-    // Show modal with playlist options
     const modal = document.getElementById('settings-modal')
     document.getElementById('modal-title').textContent = `Add "${song.title}" to playlist`
     document.getElementById('modal-body').innerHTML = `
@@ -869,7 +898,6 @@ window.addCurrentSongToPlaylist = async function(songIdParam = null) {
 window.confirmAddToPlaylist = async function(songId, playlistId, playlistName) {
   window.closeSettingsModal()
   try {
-    // Check if already in playlist
     const { data: existing } = await supabase
       .from('playlist_songs')
       .select('id')
@@ -887,7 +915,6 @@ window.confirmAddToPlaylist = async function(songId, playlistId, playlistName) {
     const song = songs.find(s => String(s.id) === String(songId))
     alert(`✅ "${song?.title || 'Song'}" added to "${playlistName}"!`)
 
-    // If currently viewing this playlist, refresh it
     if (currentViewingPlaylistId === playlistId) {
       openPlaylistView(playlistId, playlistName)
     }
@@ -896,7 +923,6 @@ window.confirmAddToPlaylist = async function(songId, playlistId, playlistName) {
   }
 }
 
-// removeSongFromPlaylist
 window.removeSongFromPlaylist = async function(playlistId, songId, playlistName) {
   if (!confirm('Remove this song from playlist?')) return
   try {
@@ -906,14 +932,12 @@ window.removeSongFromPlaylist = async function(playlistId, songId, playlistName)
       .eq('playlist_id', playlistId)
       .eq('song_id', songId)
     if (error) throw error
-    // Refresh playlist view
     openPlaylistView(playlistId, playlistName || currentViewingPlaylistName)
   } catch (error) {
     alert('Error removing song: ' + error.message)
   }
 }
 
-// closeSettingsModal — always works
 window.closeSettingsModal = function() {
   const modal = document.getElementById('settings-modal')
   if (modal) {
@@ -924,7 +948,7 @@ window.closeSettingsModal = function() {
 
 window.openSettingsModal = function(type) {
   const c = {
-    account: { t:'Account', b:`<h4>Account Details</h4><p><b>Email:</b> ${currentUser?.email || '-'}</p><p><b>Role:</b> ${document.getElementById('profile-role-label').textContent}</p>` },
+    account: { t:'Account', b:`<h4>Account Details</h4><p><b>Email/Phone:</b> ${currentUser?.email || currentUser?.phone || '-'}</p><p><b>Role:</b> ${document.getElementById('profile-role-label').textContent}</p>` },
     version: { t:'Version', b:`<div class="version-tag">v1.0.0</div><h4 style="margin-top:14px">Audivo</h4><p>© 2026 Audivo. All rights reserved.</p>` },
     support: { t:'Support', b:`<h4>Contact Us</h4><p>📧 support@audivo.app</p><p>We typically respond within 24 hours.</p>` },
     terms:   { t:'Terms of Use', b:`<h4>Terms of Use</h4><p>By using Audivo, you agree to use this app for personal, non-commercial purposes only.</p>` },
@@ -939,7 +963,7 @@ window.openSettingsModal = function(type) {
 }
 
 // ============================================
-// UPLOAD SONG (Admin) - Fixed Database Write
+// UPLOAD SONG (Admin)
 // ============================================
 window.handleUpload = async function() {
   const title     = document.getElementById('song-title').value.trim()
@@ -985,11 +1009,9 @@ window.handleUpload = async function() {
     })
     if (dbErr) throw dbErr
 
-    // Show success
     document.getElementById('upload-success').classList.remove('hidden')
     setTimeout(() => document.getElementById('upload-success').classList.add('hidden'), 3000)
 
-    // Reset form
     document.getElementById('song-title').value  = ''
     document.getElementById('song-artist').value = ''
     document.getElementById('song-genre').value  = ''
@@ -1002,7 +1024,6 @@ window.handleUpload = async function() {
     document.getElementById('drop-zone').classList.remove('file-selected')
     document.getElementById('drop-zone-text').textContent = 'Tap to select audio file'
 
-    // Reload songs so it's visible everywhere immediately
     await loadSongs()
 
   } catch (error) {
@@ -1141,9 +1162,9 @@ window.showLibTab = function(tab, btn) {
 // YOUR UPDATE / RECENT
 // ============================================
 function renderYourUpdate() {
-  const letter = currentUser?.email?.[0]?.toUpperCase() || 'U'
+  const letter = currentUser?.email?.[0]?.toUpperCase() || currentUser?.phone?.[0]?.toUpperCase() || 'U'
   document.getElementById('update-avatar').textContent    = letter
-  document.getElementById('update-name').textContent      = currentUser?.email || '-'
+  document.getElementById('update-name').textContent      = currentUser?.email || currentUser?.phone || '-'
   document.getElementById('update-role').textContent      = document.getElementById('profile-role-label').textContent
   document.getElementById('stat-songs').textContent       = playHistory.length
   document.getElementById('stat-liked').textContent       = likedSongIds.length
