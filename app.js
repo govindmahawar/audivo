@@ -245,7 +245,7 @@ function renderSongs() {
         <div class="h-card-sub">${song.artist}</div>
         ${song.is_new_release ? '<div class="new-badge">🔥 NEW</div>' : ''}
         
-        <!-- 🆕 ADD TO PLAYLIST BUTTON -->
+        <!-- ADD TO PLAYLIST BUTTON -->
         <button class="ripple" onclick="event.stopPropagation(); addSongToPlaylist('${song.id}')" style="background:var(--surface3); border:none; color:var(--text-muted); font-size:10px; padding:4px 8px; border-radius:12px; margin-top:6px; cursor:pointer;">
           <i class="fa fa-plus"></i> Playlist
         </button>
@@ -327,7 +327,7 @@ window.clearSearch = function() {
 // PLAYER FUNCTIONS WITH TIME & ART
 // ============================================
 window.playSongById = function(id) {
-  // FIX: Convert to String to handle Number vs String ID mismatch
+  // FIX: Convert to String
   const index = songs.findIndex(s => String(s.id) === String(id))
   if (index !== -1) playSong(index)
 }
@@ -505,7 +505,7 @@ function renderLikedList() {
 }
 
 // ============================================
-// PLAYLIST FUNCTIONS (FIXED)
+// PLAYLIST FUNCTIONS
 // ============================================
 window.createPlaylist = async function() {
   const name = prompt('Enter Playlist Name:')
