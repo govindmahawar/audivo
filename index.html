@@ -92,7 +92,6 @@
       </div>
       <div id="home-content" class="hidden">
         <div class="quick-access-row" id="quick-access-row"></div>
-        
         <section class="section">
           <div class="section-header"><h2>🆕 Recently Uploaded</h2></div>
           <div class="horizontal-scroll" id="recent-upload-list"></div>
@@ -105,7 +104,6 @@
           <div class="section-header"><h2>🎤 Popular Artists</h2></div>
           <div class="horizontal-scroll" id="popular-artists-list"></div>
         </section>
-        
         <section class="section" id="section-popular-songs">
           <div class="section-header"><h2>🔥 Popular Songs</h2></div>
           <div class="horizontal-scroll" id="popular-songs-list"></div>
@@ -114,13 +112,11 @@
           <div class="section-header"><h2 id="made-for-label">Made For You</h2></div>
           <div class="horizontal-scroll" id="made-for-list"></div>
         </section>
-        
         <section class="section">
           <div class="section-header"><h2>All Songs</h2></div>
           <div class="horizontal-scroll" id="all-songs-list"></div>
         </section>
-        
-        <div id="songs-container" style="padding: 10px 16px;"></div>
+        <div id="songs-container" style="padding:10px 16px;"></div>
       </div>
       <div style="height:20px"></div>
     </div>
@@ -130,8 +126,13 @@
       <h1 class="page-title">Search</h1>
       <div class="search-wrap">
         <i class="fa fa-search search-icon-left"></i>
-        <input type="text" id="search-input" placeholder="Songs, artists, genres..." oninput="searchSongs()" autocomplete="off" class="search-bar"/>
-        <button class="search-clear ripple" id="search-clear-btn" onclick="clearSearch()"><i class="fa fa-times"></i></button>
+        <input type="text" id="search-input"
+          placeholder="Songs, artists, genres..."
+          oninput="searchSongs()"
+          autocomplete="off"
+          class="search-bar"/>
+        <button class="search-clear ripple" id="search-clear-btn" onclick="clearSearch()" style="display:none"><i class="fa fa-times"></i></button>
+        <div class="search-suggestions hidden" id="search-suggestions"></div>
       </div>
       <div id="search-empty">
         <h3 class="browse-title">Browse Categories</h3>
@@ -164,11 +165,21 @@
       </div>
       <div id="lib-artists" class="lib-tab hidden">
         <div id="followed-artists-list"></div>
-        <p style="color:var(--text-muted);font-size:12px;margin-top:12px">Artists appear here when admin uploads songs or you follow them.</p>
+        <p style="color:var(--text-muted);font-size:12px;margin-top:12px;padding:0 16px">Artists appear here when you follow them from Home.</p>
       </div>
       <div id="lib-history" class="lib-tab hidden">
         <div class="song-list" id="history-list"></div>
       </div>
+    </div>
+
+    <!-- PLAYLIST VIEW PAGE -->
+    <div id="page-playlist-view" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="switchTab('library')"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0" id="playlist-view-title">Playlist</h1>
+        <button class="add-btn ripple" onclick="addCurrentSongToPlaylist()" title="Add current playing song"><i class="fa fa-plus"></i></button>
+      </div>
+      <div id="playlist-view-container" style="padding:0 16px"></div>
     </div>
 
     <!-- PREMIUM PAGE -->
@@ -237,6 +248,13 @@
             <div class="create-sub">Admin only — add popular artists</div>
           </div>
         </div>
+        <div class="create-card admin-only hidden ripple" onclick="showPage('add-release')">
+          <div class="create-icon" style="background:#f39c12"><i class="fa fa-star"></i></div>
+          <div>
+            <div class="create-label">Add New Release</div>
+            <div class="create-sub">Admin only — mark song as new release</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -278,16 +296,11 @@
           </div>
           <button class="btn-primary ripple" onclick="handleUpload()"><i class="fa fa-upload"></i> Upload Song</button>
         </div>
-        
-        <!-- Delete Song Feature -->
-        <div style="margin-top:20px; border-top:1px solid #333; padding-top:20px;">
-          <h3 style="color:var(--text-muted); font-size:16px; margin-bottom:10px;">🗑️ Delete Song</h3>
-          <div style="display:flex; gap:10px;">
-            <input type="text" id="delete-song-search" placeholder="Search song to delete..." style="flex:1; background:var(--surface2); border:1px solid #444; border-radius:8px; padding:12px; color:#fff; outline:none;" oninput="searchSongsToDelete()"/>
-          </div>
-          <div id="delete-song-list" style="margin-top:10px; max-height:200px; overflow-y:auto;"></div>
+        <div style="margin-top:20px;border-top:1px solid #333;padding-top:20px;">
+          <h3 style="color:var(--text-muted);font-size:16px;margin-bottom:10px;">🗑️ Delete Song</h3>
+          <input type="text" id="delete-song-search" placeholder="Search song to delete..." style="width:100%;background:var(--surface2);border:1px solid #444;border-radius:8px;padding:12px;color:#fff;outline:none;" oninput="searchSongsToDelete()"/>
+          <div id="delete-song-list" style="margin-top:10px;max-height:200px;overflow-y:auto;"></div>
         </div>
-        
         <div id="upload-success" class="hidden success-msg">
           <i class="fa fa-check-circle"></i>
           <p>Song uploaded successfully!</p>
@@ -314,13 +327,26 @@
         <div id="add-artist-form">
           <input type="text" id="artist-name-input" placeholder="Artist Name *"/>
           <input type="text" id="artist-genre-input" placeholder="Genre (e.g. Pop, Rock)"/>
-          <textarea id="artist-bio-input" placeholder="Artist Bio (optional)" rows="3" style="background:var(--surface2);border:1px solid #444;border-radius:8px;padding:13px;color:var(--text);font-size:14px;resize:none;outline:none;font-family:inherit"></textarea>
+          <textarea id="artist-bio-input" placeholder="Artist Bio (optional)" rows="3"
+            style="background:var(--surface2);border:1px solid #444;border-radius:8px;padding:13px;color:var(--text);font-size:14px;resize:none;outline:none;font-family:inherit"></textarea>
           <button class="btn-primary ripple" onclick="addArtist()"><i class="fa fa-user-plus"></i> Add Artist</button>
         </div>
         <div id="add-artist-success" class="hidden success-msg">
           <i class="fa fa-check-circle"></i>
           <p>Artist added successfully!</p>
         </div>
+      </div>
+    </div>
+
+    <!-- ADD NEW RELEASE PAGE -->
+    <div id="page-add-release" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">New Release <span class="badge-admin">Admin</span></h1>
+      </div>
+      <div style="padding:0 16px">
+        <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">Select a song to mark as New Release:</p>
+        <div id="mark-release-list" class="song-list"></div>
       </div>
     </div>
 
@@ -331,7 +357,7 @@
         <h1 class="page-title" style="padding:0">Admin Panel <span class="badge-admin">Admin</span></h1>
       </div>
       <div style="padding:0 16px;">
-        <h3 style="color: var(--text-muted); font-size:14px; margin-bottom:10px;">All Registered Users</h3>
+        <h3 style="color:var(--text-muted);font-size:14px;margin-bottom:10px;">All Registered Users</h3>
         <div id="all-users-list"></div>
       </div>
     </div>
@@ -356,10 +382,6 @@
         </div>
         <div class="update-section"><h3>Top Genre</h3><div class="top-genre-badge" id="top-genre-badge">-</div></div>
         <div class="update-section"><h3>Top Artist</h3><div class="top-artist-badge" id="top-artist-badge">-</div></div>
-        <div class="update-section" id="admin-uploaded-section" style="display:none">
-          <h3>Songs You Uploaded</h3>
-          <div class="song-list" id="admin-uploaded-list"></div>
-        </div>
       </div>
     </div>
 
@@ -476,6 +498,7 @@
       <button class="icon-btn ripple" onclick="event.stopPropagation();toggleLike()"><i class="fa fa-heart" id="mini-heart"></i></button>
       <button class="icon-btn play-mini-btn ripple" onclick="event.stopPropagation();togglePlay()"><i class="fa fa-play" id="mini-play-icon"></i></button>
       <button class="icon-btn ripple" onclick="event.stopPropagation();nextSong()"><i class="fa fa-step-forward"></i></button>
+      <button class="icon-btn ripple" onclick="event.stopPropagation();addCurrentSongToPlaylist()" title="Add to Playlist"><i class="fa fa-list"></i></button>
     </div>
     <div class="mini-progress"><div class="mini-progress-bar" id="mini-progress-bar"></div></div>
   </div>
@@ -494,7 +517,7 @@
     <div class="fp-header">
       <button class="fp-back ripple" onclick="closeFullPlayer()"><i class="fa fa-chevron-down"></i></button>
       <div class="fp-header-info"><span>Now Playing</span></div>
-      <button class="icon-btn ripple"><i class="fa fa-ellipsis-v"></i></button>
+      <button class="icon-btn ripple" onclick="addCurrentSongToPlaylist()" title="Add to Playlist"><i class="fa fa-list"></i></button>
     </div>
     <div class="fp-art"><div class="fp-thumb" id="fp-thumb"><i class="fa fa-music"></i></div></div>
     <div class="fp-meta">
@@ -524,7 +547,7 @@
     </div>
   </div>
 
-  <!-- SETTINGS MODAL -->
+  <!-- SETTINGS / PLAYLIST MODAL -->
   <div id="settings-modal" class="modal-overlay hidden" onclick="closeSettingsModal()">
     <div class="modal-box" onclick="event.stopPropagation()">
       <div class="modal-header">
@@ -537,16 +560,7 @@
 
 </div>
 
-<!-- ==================== SCRIPTS ==================== -->
-<script type="importmap">
-{
-  "imports": {
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-  }
-}
-</script>
-
+<script type="importmap">{"imports":{"@supabase/supabase-js":"https://esm.sh/@supabase/supabase-js@2"}}</script>
 <script type="module" src="app.js"></script>
-
 </body>
 </html>
