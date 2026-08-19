@@ -1,15 +1,18 @@
 // ============================================
-// SUPABASE CLIENT
+// 🔥 MODULE 1: SUPABASE CLIENT
 // ============================================
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = 'https://hkyysqsfgpjeutevytpu.supabase.co'
 const supabaseAnonKey = 'sb_publishable_eocQJoA0KYdRtpKQd3HQQQ_TKSAAubO'
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// 🔥 Normal User Client (Anon Key) - For all normal app features
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
 console.log('✅ Supabase Connected!')
 
 // ============================================
-// STATE
+// 🔥 MODULE 2: STATE & GLOBAL VARIABLES
 // ============================================
 let currentUser = null
 let songs = []
@@ -25,7 +28,7 @@ let playHistory = []
 let userBehavior = { genrePlayCount: {}, artistPlayCount: {} }
 
 // ============================================
-// SPOTIFY-STYLE AUTH NAVIGATION
+// 🔥 MODULE 3: AUTH NAVIGATION (Show/Hide Screens)
 // ============================================
 window.showAuthScreen = function(type) {
   document.getElementById('landing-page').classList.add('hidden')
@@ -60,7 +63,7 @@ window.toggleAuthForm = function(type) {
 }
 
 // ============================================
-// AUTH FUNCTIONS
+// 🔥 MODULE 4: AUTHENTICATION (Login, Signup, Logout)
 // ============================================
 window.handleEmailSignup = async function() {
   const email = document.getElementById('signup-email').value.trim()
@@ -92,11 +95,23 @@ window.handleEmailLogin = async function() {
   
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    currentUser = data.user
-    onAuthSuccess(data.user)
+    
+    // ✅ FIXED: Explicitly handle supabase errors
+    if (error) {
+      errorEl.textContent = error.message
+      return
+    }
+
+    if (data && data.user) {
+      currentUser = data.user
+      onAuthSuccess(data.user)
+    } else {
+      errorEl.textContent = 'Login failed. Unknown error.'
+    }
+
   } catch (error) {
-    errorEl.textContent = error.message
+    errorEl.textContent = error.message || 'Network error.'
+    console.error('Login error:', error)
   }
 }
 
@@ -120,6 +135,9 @@ window.handleLogout = async function() {
   }
 }
 
+// ============================================
+// 🔥 MODULE 5: ON AUTH SUCCESS & ADMIN CHECK
+// ============================================
 function onAuthSuccess(user) {
   currentUser = user
   document.getElementById('login-screen').style.display = 'none'
@@ -145,9 +163,6 @@ function onAuthSuccess(user) {
   renderGenreGrid()
 }
 
-// ============================================
-// ADMIN CHECK
-// ============================================
 async function checkIfAdmin(userId, identifier) {
   try {
     const { data } = await supabase.from('profiles').select('role').eq('id', userId).single()
@@ -164,43 +179,88 @@ async function checkIfAdmin(userId, identifier) {
   }
 }
 
+// ============================================
+// 🔥 MODULE 6: ADMIN PANEL - USERS & BLOCK/UNBLOCK
+// ============================================
 async function loadAllUsers() {
   try {
-    const { data: profileList } = await supabase.from('profiles').select('id, role')
+    // ✅ FIXED: Using secure RPC function instead of secret key
+    const { data: authUsers, error: userError } = await supabase
+      .rpc('get_all_users')
+    
+    if (userError) {
+      console.warn('Error fetching users:', userError.message)
+      const container = document.getElementById('all-users-list')
+      if(container) container.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">Error: ${userError.message}</p>`
+      return
+    }
+
+    const { data: profileList, error: profileError } = await supabase.from('profiles').select('id, role')
+    
     const container = document.getElementById('all-users-list')
-    if (!container || !profileList) return
-    container.innerHTML = profileList.length === 0
-      ? `<p style="color:var(--text-muted)">No user profiles found.</p>`
-      : profileList.map(u => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #333;">
-            <div>
-              <div style="font-weight:600;">${u.id.substring(0,8)}...</div>
-              <div style="font-size:12px;color:var(--text-muted);">Role: ${u.role || 'user'}</div>
-            </div>
-            <button class="ripple" onclick="toggleAdminRole('${u.id}','${u.role||'user'}')"
-              style="background:${u.role==='admin'?'var(--accent)':'#444'};border:none;color:${u.role==='admin'?'#000':'#fff'};padding:5px 12px;border-radius:50px;font-weight:bold;cursor:pointer;font-size:12px;">
-              ${u.role === 'admin' ? '✓ Admin' : 'Make Admin'}
-            </button>
-          </div>`).join('')
+    if (!container) return
+
+    if (!authUsers || authUsers.length === 0) {
+      container.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">No registered users found.</p>`
+      return
+    }
+
+    const data = authUsers.map(user => {
+      const profile = profileList?.find(p => p.id === user.id)
+      return { 
+        id: user.id, 
+        email: user.email, 
+        role: profile?.role || 'user',
+        isBanned: user.banned_at ? true : false // Check if user is blocked
+      }
+    })
+
+    container.innerHTML = data.map(u => `
+      <div class="user-list-item">
+        <div class="user-list-info">
+          <div class="user-list-email">${u.email}</div>
+          <div class="user-list-role">Role: ${u.role}</div>
+        </div>
+        ${u.email !== 'admin@audivo.com' ? `
+          <button class="${u.isBanned ? 'unblock-btn' : 'block-btn'} ripple" onclick="toggleUserBlock('${u.id}', ${u.isBanned})">
+            ${u.isBanned ? 'Unblock' : 'Block'}
+          </button>
+        ` : `<span style="color:var(--accent);font-weight:bold;">⭐ Super Admin</span>`}
+      </div>
+    `).join('')
+    
   } catch (error) {
     console.error('Error loading users:', error)
+    const container = document.getElementById('all-users-list')
+    if(container) container.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">Error loading users.</p>`
   }
 }
 
-window.toggleAdminRole = async function(userId, currentRole) {
-  const newRole = currentRole === 'admin' ? 'user' : 'admin'
+// ✅ REAL BLOCK/UNBLOCK FUNCTION (Using secure RPC)
+window.toggleUserBlock = async function(userId, isCurrentlyBanned) {
+  if (!confirm(`Are you sure you want to ${isCurrentlyBanned ? 'unblock' : 'block'} this user?`)) return
+
   try {
-    const { error } = await supabase.from('profiles').upsert({ id: userId, role: newRole })
-    if (error) throw error
+    if (isCurrentlyBanned) {
+      // Unblock user
+      const { error } = await supabase.rpc('unban_user', { user_id: userId })
+      if (error) throw error
+      alert('User unblocked successfully! They can now log in.')
+    } else {
+      // Block user
+      const { error } = await supabase.rpc('ban_user', { user_id: userId })
+      if (error) throw error
+      alert('User blocked successfully! They will not be able to log in.')
+    }
+    // Refresh the list to reflect changes
     loadAllUsers()
-    alert(`User role updated to ${newRole}!`)
   } catch (error) {
-    alert('Error updating role: ' + error.message)
+    alert('Error updating user status: ' + error.message)
   }
 }
 
 // ============================================
-// SONGS
+// 🔥 MODULE 7: SONGS & HOME RENDERING
 // ============================================
 async function loadSongs() {
   try {
@@ -276,7 +336,7 @@ function renderQuickAccess() {
 }
 
 // ============================================
-// ARTISTS
+// 🔥 MODULE 8: ARTISTS & FOLLOW/UNFOLLOW
 // ============================================
 async function loadArtists() {
   try {
@@ -359,75 +419,7 @@ window.unfollowArtist = function(artistId, btn) {
 }
 
 // ============================================
-// ADD ARTIST (Admin)
-// ============================================
-let selectedArtistPhotoFile = null
-
-window.handleArtistPhotoSelect = function(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  selectedArtistPhotoFile = file
-  const reader = new FileReader()
-  reader.onload = ev => {
-    const img = document.getElementById('artist-photo-preview')
-    img.src = ev.target.result
-    img.classList.remove('hidden')
-    document.getElementById('artist-cover-placeholder').style.display = 'none'
-  }
-  reader.readAsDataURL(file)
-}
-
-window.addArtist = async function() {
-  if (!currentUser) return
-  const name  = document.getElementById('artist-name-input').value.trim()
-  const genre = document.getElementById('artist-genre-input').value.trim()
-  const bio   = document.getElementById('artist-bio-input').value.trim()
-  if (!name) { alert('Artist name is required.'); return }
-
-  try {
-    let photoUrl = null
-    if (selectedArtistPhotoFile) {
-      const ext  = selectedArtistPhotoFile.name.split('.').pop()
-      const path = `artists/${Date.now()}_${name.replace(/\s/g,'_')}.${ext}`
-      const { error: uploadErr } = await supabase.storage.from('covers').upload(path, selectedArtistPhotoFile)
-      if (!uploadErr) {
-        const { data } = supabase.storage.from('covers').getPublicUrl(path)
-        photoUrl = data.publicUrl
-      }
-    }
-
-    const { data, error } = await supabase.from('artists').insert({ name, genre, bio, photo_url: photoUrl }).select()
-    if (error) throw error
-
-    artists.push(data[0])
-
-    document.getElementById('add-artist-form').style.display  = 'none'
-    document.getElementById('artist-cover-picker').style.display = 'none'
-    const suc = document.getElementById('add-artist-success')
-    suc.classList.remove('hidden')
-
-    setTimeout(() => {
-      suc.classList.add('hidden')
-      document.getElementById('add-artist-form').style.display    = 'flex'
-      document.getElementById('artist-cover-picker').style.display = 'flex'
-      document.getElementById('artist-name-input').value  = ''
-      document.getElementById('artist-genre-input').value = ''
-      document.getElementById('artist-bio-input').value   = ''
-      document.getElementById('artist-photo-preview').classList.add('hidden')
-      document.getElementById('artist-photo-preview').src = ''
-      document.getElementById('artist-cover-placeholder').style.display = 'flex'
-      document.getElementById('artist-photo-input').value = ''
-      selectedArtistPhotoFile = null
-    }, 2000)
-
-    renderArtistsSection()
-  } catch (error) {
-    alert('Error adding artist: ' + error.message)
-  }
-}
-
-// ============================================
-// SEARCH
+// 🔥 MODULE 9: SEARCH & SUGGESTIONS
 // ============================================
 window.searchSongs = function() {
   const query      = document.getElementById('search-input').value.trim().toLowerCase()
@@ -546,7 +538,7 @@ function renderGenreGrid() {
 }
 
 // ============================================
-// PLAYER
+// 🔥 MODULE 10: PLAYER & VISUALIZER (Removed Golden Line)
 // ============================================
 window.playSongById = function(id) {
   const index = songs.findIndex(s => String(s.id) === String(id))
@@ -589,6 +581,8 @@ window.playSong = function(index) {
       document.getElementById('fp-play-icon').className   = 'fa fa-pause'
       updateLikeUI()
       renderQuickAccess()
+      renderAdminStats()
+      
       supabase.from('song').update({ plays: (song.plays || 0) + 1 }).eq('id', song.id).then(() => {
         song.plays = (song.plays || 0) + 1
       })
@@ -651,7 +645,7 @@ window.toggleShuffle = function() { document.getElementById('shuffle-btn').class
 window.toggleRepeat  = function() { document.getElementById('repeat-btn').classList.toggle('active') }
 
 // ============================================
-// LIKE
+// 🔥 MODULE 11: LIKE / LIKED SONGS
 // ============================================
 async function loadLikedSongs() {
   if (!currentUser) return
@@ -704,7 +698,7 @@ function renderLikedList() {
 }
 
 // ============================================
-// PLAYLIST FUNCTIONS
+// 🔥 MODULE 12: PLAYLISTS (Create, Delete, Add, Remove)
 // ============================================
 window.createPlaylist = async function() {
   const name = prompt('Enter Playlist Name:')
@@ -743,9 +737,36 @@ async function loadPlaylists() {
           <div class="pl-count">Tap to view songs</div>
         </div>
         <i class="fa fa-chevron-right" style="color:var(--text-dim)"></i>
+        <button class="delete-btn" onclick="event.stopPropagation();deletePlaylist(${pl.id}, '${pl.name.replace(/'/g,"\\'")}')">Delete</button>
       </div>`).join('')
   } catch (error) {
     console.error('Error loading playlists:', error)
+  }
+}
+
+window.deletePlaylist = async function(playlistId, playlistName) {
+  if (!confirm(`Are you sure you want to delete the playlist "${playlistName}"?`)) return
+
+  try {
+    const { error: deleteSongsError } = await supabase
+      .from('playlist_songs')
+      .delete()
+      .eq('playlist_id', playlistId)
+
+    if (deleteSongsError) throw deleteSongsError
+
+    const { error: deletePlaylistError } = await supabase
+      .from('playlists')
+      .delete()
+      .eq('id', playlistId)
+
+    if (deletePlaylistError) throw deletePlaylistError
+
+    alert(`Playlist "${playlistName}" deleted successfully!`)
+    loadPlaylists()
+  } catch (error) {
+    alert('Error deleting playlist: ' + error.message)
+    console.error('Delete playlist error:', error)
   }
 }
 
@@ -936,7 +957,216 @@ window.openSettingsModal = function(type) {
 }
 
 // ============================================
-// UPLOAD SONG (Admin)
+// 🔥 MODULE 13: ADMIN STATS DASHBOARD
+// ============================================
+function renderAdminStats() {
+  const dashboard = document.getElementById('admin-stats-dashboard')
+  if (!dashboard) return
+
+  if (songs.length === 0) {
+    dashboard.innerHTML = `<p style="color:var(--text-muted);font-size:13px;">No data available yet.</p>`
+    return
+  }
+
+  const topSongs = [...songs].sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, 5)
+  const maxPlays = topSongs.length > 0 ? topSongs[0].plays || 1 : 1
+
+  dashboard.innerHTML = `
+    <div class="stat-bar-wrapper">
+      ${topSongs.map(song => {
+        const heightPercent = maxPlays > 0 ? Math.max(5, ((song.plays || 0) / maxPlays) * 100) : 5
+        return `
+          <div class="stat-bar-item">
+            <div class="stat-bar-value">${song.plays || 0}</div>
+            <div class="stat-bar" style="height: ${heightPercent}%;"></div>
+            <div class="stat-bar-label">${song.title.length > 8 ? song.title.substring(0, 8) + '...' : song.title}</div>
+          </div>
+        `
+      }).join('')}
+    </div>
+  `
+}
+
+// ============================================
+// 🔥 MODULE 14: SEND NOTIFICATION (Browser Notification)
+// ============================================
+window.sendNotificationToAll = async function() {
+  const message = document.getElementById('notif-message').value.trim()
+  const statusEl = document.getElementById('notif-status')
+  
+  if (!message) {
+    statusEl.textContent = 'Please type a notification message!'
+    statusEl.style.color = 'var(--danger)'
+    return
+  }
+  
+  statusEl.textContent = 'Processing...'
+  statusEl.style.color = 'var(--text-muted)'
+
+  try {
+    const notificationData = {
+      message: message,
+      timestamp: new Date().toISOString(),
+      from: 'Admin'
+    }
+    
+    localStorage.setItem('audivo_last_notification', JSON.stringify(notificationData))
+
+    if ("Notification" in window) {
+      if (Notification.permission === "granted") {
+        new Notification("📢 Audivo Admin", { body: message })
+      } else if (Notification.permission !== "denied") {
+        const permission = await Notification.requestPermission()
+        if (permission === "granted") {
+          new Notification("📢 Audivo Admin", { body: message })
+        }
+      }
+    }
+
+    const history = JSON.parse(localStorage.getItem('audivo_notification_history') || '[]')
+    history.push({
+      id: Date.now(),
+      message: message,
+      timestamp: new Date().toISOString()
+    })
+    localStorage.setItem('audivo_notification_history', JSON.stringify(history))
+
+    statusEl.textContent = '✅ Notification sent successfully!'
+    statusEl.style.color = 'var(--accent)'
+    
+    setTimeout(() => {
+      document.getElementById('notif-message').value = ''
+      statusEl.textContent = ''
+    }, 3000)
+
+    renderNotificationHistory()
+    
+  } catch (error) {
+    statusEl.textContent = 'Error sending notification: ' + error.message
+    statusEl.style.color = 'var(--danger)'
+    console.error('Notification error:', error)
+  }
+}
+
+// ============================================
+// 🔥 MODULE 15: NOTIFICATION HISTORY
+// ============================================
+function renderNotificationHistory() {
+  const container = document.getElementById('notification-history-list')
+  const countEl = document.getElementById('total-notif-count')
+  
+  if (!container) return
+
+  const history = JSON.parse(localStorage.getItem('audivo_notification_history') || '[]')
+  
+  if (countEl) countEl.textContent = history.length
+
+  if (history.length === 0) {
+    container.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:20px;">No notifications sent yet.</p>`
+    return
+  }
+
+  container.innerHTML = [...history].reverse().map(notif => `
+    <div class="notif-card">
+      <div class="notif-message">${notif.message}</div>
+      <div class="notif-time">${new Date(notif.timestamp).toLocaleString()}</div>
+    </div>
+  `).join('')
+}
+
+// Check for notifications
+function checkForNotifications() {
+  const stored = localStorage.getItem('audivo_last_notification')
+  if (stored) {
+    try {
+      const data = JSON.parse(stored)
+      const now = new Date()
+      const notifTime = new Date(data.timestamp)
+      const diff = (now - notifTime) / 1000
+      
+      if (diff < 120 && "Notification" in window) {
+        if (Notification.permission === "granted") {
+          new Notification("📢 Audivo Admin", { body: data.message })
+        }
+      }
+    } catch (e) {}
+  }
+}
+
+if ("Notification" in window && Notification.permission === "default") {
+  Notification.requestPermission()
+}
+
+// ============================================
+// 🔥 MODULE 16: ADD ARTIST (Admin)
+// ============================================
+let selectedArtistPhotoFile = null
+
+window.handleArtistPhotoSelect = function(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  selectedArtistPhotoFile = file
+  const reader = new FileReader()
+  reader.onload = ev => {
+    const img = document.getElementById('artist-photo-preview')
+    img.src = ev.target.result
+    img.classList.remove('hidden')
+    document.getElementById('artist-cover-placeholder').style.display = 'none'
+  }
+  reader.readAsDataURL(file)
+}
+
+window.addArtist = async function() {
+  if (!currentUser) return
+  const name  = document.getElementById('artist-name-input').value.trim()
+  const genre = document.getElementById('artist-genre-input').value.trim()
+  const bio   = document.getElementById('artist-bio-input').value.trim()
+  if (!name) { alert('Artist name is required.'); return }
+
+  try {
+    let photoUrl = null
+    if (selectedArtistPhotoFile) {
+      const ext  = selectedArtistPhotoFile.name.split('.').pop()
+      const path = `artists/${Date.now()}_${name.replace(/\s/g,'_')}.${ext}`
+      const { error: uploadErr } = await supabase.storage.from('covers').upload(path, selectedArtistPhotoFile)
+      if (!uploadErr) {
+        const { data } = supabase.storage.from('covers').getPublicUrl(path)
+        photoUrl = data.publicUrl
+      }
+    }
+
+    const { data, error } = await supabase.from('artists').insert({ name, genre, bio, photo_url: photoUrl }).select()
+    if (error) throw error
+
+    artists.push(data[0])
+
+    document.getElementById('add-artist-form').style.display  = 'none'
+    document.getElementById('artist-cover-picker').style.display = 'none'
+    const suc = document.getElementById('add-artist-success')
+    suc.classList.remove('hidden')
+
+    setTimeout(() => {
+      suc.classList.add('hidden')
+      document.getElementById('add-artist-form').style.display    = 'flex'
+      document.getElementById('artist-cover-picker').style.display = 'flex'
+      document.getElementById('artist-name-input').value  = ''
+      document.getElementById('artist-genre-input').value = ''
+      document.getElementById('artist-bio-input').value   = ''
+      document.getElementById('artist-photo-preview').classList.add('hidden')
+      document.getElementById('artist-photo-preview').src = ''
+      document.getElementById('artist-cover-placeholder').style.display = 'flex'
+      document.getElementById('artist-photo-input').value = ''
+      selectedArtistPhotoFile = null
+    }, 2000)
+
+    renderArtistsSection()
+  } catch (error) {
+    alert('Error adding artist: ' + error.message)
+  }
+}
+
+// ============================================
+// 🔥 MODULE 17: UPLOAD SONG (Admin)
 // ============================================
 window.handleUpload = async function() {
   const title     = document.getElementById('song-title').value.trim()
@@ -1033,7 +1263,7 @@ window.handleFileSelect = function(e) {
 }
 
 // ============================================
-// DELETE SONG (Admin)
+// 🔥 MODULE 18: DELETE SONG (Admin)
 // ============================================
 window.searchSongsToDelete = function() {
   const query     = document.getElementById('delete-song-search').value.trim().toLowerCase()
@@ -1075,7 +1305,7 @@ window.deleteSong = async function(songId, title) {
 }
 
 // ============================================
-// NAVIGATION
+// 🔥 MODULE 19: NAVIGATION (Tabs, Profile, Menus)
 // ============================================
 window.switchTab = function(tab) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
@@ -1096,9 +1326,17 @@ window.showProfilePage = function(page) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
   const el = document.getElementById('page-' + page)
   if (el) el.classList.add('active')
-  if (page === 'admin-panel') loadAllUsers()
+  if (page === 'admin-panel') { loadAllUsers(); renderAdminStats(); }
   if (page === 'your-update') renderYourUpdate()
   if (page === 'recent-page') renderRecentPage()
+  if (page === 'send-notification') {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission()
+    }
+  }
+  if (page === 'notification-history') {
+    renderNotificationHistory()
+  }
 }
 
 window.goBack = function() { switchTab('home') }
@@ -1132,7 +1370,7 @@ window.showLibTab = function(tab, btn) {
 }
 
 // ============================================
-// YOUR UPDATE / RECENT
+// 🔥 MODULE 20: YOUR UPDATE / RECENT
 // ============================================
 function renderYourUpdate() {
   const letter = currentUser?.email?.[0]?.toUpperCase() || currentUser?.phone?.[0]?.toUpperCase() || 'U'
@@ -1188,7 +1426,7 @@ window.setQuality = function(q) {
 window.saveSetting = function(key, val) { console.log('Setting:', key, val) }
 
 // ============================================
-// SESSION CHECK
+// 🔥 MODULE 21: SESSION CHECK
 // ============================================
 async function checkSession() {
   try {
@@ -1212,5 +1450,6 @@ supabase.auth.onAuthStateChange((event, session) => {
   }
 })
 
+checkForNotifications()
 checkSession()
 console.log('🔥 Audivo Pro ready!')

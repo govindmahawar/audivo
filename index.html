@@ -26,53 +26,40 @@
     </div>
   </div>
 
-  <!-- ===== AUTH SCREEN (Signup + Login Combined) ===== -->
+  <!-- ===== AUTH SCREEN ===== -->
   <div id="auth-screen" class="login-box hidden">
-    
-    <!-- Header with Back Button -->
     <div class="form-header">
       <button class="back-btn ripple" onclick="goToLanding()"><i class="fa fa-arrow-left"></i></button>
       <h2 id="auth-title">Sign up</h2>
     </div>
-
-    <!-- Signup Form -->
     <div id="auth-signup">
       <input type="email" id="signup-email" placeholder="Email address"/>
       <input type="password" id="signup-password" placeholder="Password (min 6 chars)"/>
       <div id="signup-error" class="error-msg"></div>
       <button class="btn-spotify-green ripple" onclick="handleEmailSignup()">Sign up</button>
-      
       <div class="auth-divider">or sign up with</div>
-      
       <button class="social-btn disabled-btn" onclick="alert('Google login coming soon!')">
         <i class="fa fa-google"></i> Google <span class="coming-soon">(Coming soon)</span>
       </button>
       <button class="social-btn disabled-btn" onclick="alert('Phone login coming soon!')">
         <i class="fa fa-phone"></i> Phone number <span class="coming-soon">(Coming soon)</span>
       </button>
-      
       <p class="bottom-link" id="toggle-link-signup">Already have an account? <button class="link-btn" onclick="toggleAuthForm('login')">Log in</button></p>
     </div>
-
-    <!-- Login Form -->
     <div id="auth-login" class="hidden">
       <input type="email" id="login-email" placeholder="Email address"/>
       <input type="password" id="login-password" placeholder="Password"/>
       <div id="login-error" class="error-msg"></div>
       <button class="btn-spotify-green ripple" onclick="handleEmailLogin()">Log in</button>
-      
       <div class="auth-divider">or log in with</div>
-      
       <button class="social-btn disabled-btn" onclick="alert('Google login coming soon!')">
         <i class="fa fa-google"></i> Google <span class="coming-soon">(Coming soon)</span>
       </button>
       <button class="social-btn disabled-btn" onclick="alert('Phone login coming soon!')">
         <i class="fa fa-phone"></i> Phone number <span class="coming-soon">(Coming soon)</span>
       </button>
-      
       <p class="bottom-link" id="toggle-link-login">Don't have an account? <button class="link-btn" onclick="toggleAuthForm('signup')">Sign up for free</button></p>
     </div>
-
   </div>
 
 </div>
@@ -98,6 +85,8 @@
         <div class="menu-item ripple" onclick="showProfilePage('your-update')"><i class="fa fa-user-circle"></i> Your Update</div>
         <div class="menu-item ripple" onclick="showProfilePage('recent-page')"><i class="fa fa-history"></i> Recent</div>
         <div class="menu-item admin-only hidden ripple" onclick="showProfilePage('admin-panel')"><i class="fa fa-users-cog"></i> Admin Panel</div>
+        <div class="menu-item admin-only hidden ripple" onclick="showProfilePage('send-notification')"><i class="fa fa-bell"></i> Send Notification</div>
+        <div class="menu-item admin-only hidden ripple" onclick="showProfilePage('notification-history')"><i class="fa fa-history"></i> Notification History</div>
         <div class="menu-item ripple" onclick="showProfilePage('settings-page')"><i class="fa fa-cog"></i> Settings &amp; Privacy</div>
         <div class="menu-item admin-only hidden ripple" id="upload-menu-item" onclick="switchTab('upload')"><i class="fa fa-upload"></i> Upload Song</div>
         <hr class="menu-divider"/>
@@ -160,11 +149,7 @@
       <h1 class="page-title">Search</h1>
       <div class="search-wrap">
         <i class="fa fa-search search-icon-left"></i>
-        <input type="text" id="search-input"
-          placeholder="Songs, artists, genres..."
-          oninput="searchSongs()"
-          autocomplete="off"
-          class="search-bar"/>
+        <input type="text" id="search-input" placeholder="Songs, artists, genres..." oninput="searchSongs()" autocomplete="off" class="search-bar"/>
         <button class="search-clear ripple" id="search-clear-btn" onclick="clearSearch()" style="display:none"><i class="fa fa-times"></i></button>
         <div class="search-suggestions hidden" id="search-suggestions"></div>
       </div>
@@ -391,8 +376,40 @@
         <h1 class="page-title" style="padding:0">Admin Panel <span class="badge-admin">Admin</span></h1>
       </div>
       <div style="padding:0 16px;">
+        <h3 style="color:var(--text-muted);font-size:14px;margin-bottom:10px;">📊 Top 5 Most Played Songs</h3>
+        <div id="admin-stats-dashboard"></div>
+      </div>
+      <div style="padding:0 16px; margin-top:20px;">
         <h3 style="color:var(--text-muted);font-size:14px;margin-bottom:10px;">All Registered Users</h3>
         <div id="all-users-list"></div>
+      </div>
+    </div>
+
+    <!-- SEND NOTIFICATION PAGE -->
+    <div id="page-send-notification" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Send Notification <span class="badge-admin">Admin</span></h1>
+      </div>
+      <div style="padding:0 16px;">
+        <textarea id="notif-message" rows="4" placeholder="Type your notification message here..." style="width:100%;background:var(--surface2);border:1px solid #444;border-radius:8px;padding:13px;color:var(--text);font-size:15px;resize:none;outline:none;font-family:inherit;margin-bottom:12px;"></textarea>
+        <button class="btn-primary ripple" onclick="sendNotificationToAll()"><i class="fa fa-paper-plane"></i> Send to All Users</button>
+        <div id="notif-status" class="error-msg" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION HISTORY PAGE -->
+    <div id="page-notification-history" class="page">
+      <div class="subpage-header">
+        <button class="back-btn ripple" onclick="goBack()"><i class="fa fa-arrow-left"></i></button>
+        <h1 class="page-title" style="padding:0">Notification History <span class="badge-admin">Admin</span></h1>
+      </div>
+      <div style="padding:0 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;background:var(--surface2);padding:12px 16px;border-radius:8px;">
+          <span style="color:var(--text-muted);">Total Notifications Sent:</span>
+          <span id="total-notif-count" style="font-size:20px;font-weight:700;color:var(--accent);">0</span>
+        </div>
+        <div id="notification-history-list"></div>
       </div>
     </div>
 
